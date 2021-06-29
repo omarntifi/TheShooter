@@ -180,7 +180,6 @@ void findFAT16(int fd, char *filename, int mode){
   for (int i = 0; i < bpb.BPB_RootEntCnt; i++){
     
     pread(fd, &name, 8, FirstRootDirSecNum);
-    printf("%s\n", name);
     if (strcmp(filename,name) == 0){
       if (mode == 1){
         unsigned char delete_file = 0xE5;
