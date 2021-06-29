@@ -1,6 +1,7 @@
 #include "logic.h"
 
 Bpb bpb;
+ext2_super_block super_block;
 
 /*****************************************************
 *
@@ -89,7 +90,7 @@ void printExt2(ext2_super_block info){
     printf("Blocs Lliures: %d\n", info.s_free_blocks_count);
     printf("Total Blocs: %d\n", info.s_blocks_count);
     printf("Primer Bloc: %d\n", info.s_first_data_block);
-    printf("Blocs grup: %d\n", info.s_block_group_nr);
+    printf("Blocs grup: %d\n", info.s_blocks_per_group);
     printf("Frags grup: %d\n", info.s_clusters_per_group);
 
     printf("\nINFO VOLUM\n");
@@ -101,6 +102,41 @@ void printExt2(ext2_super_block info){
 
 
 
+void getExt2Info(int fd){
+
+  lseek(fd,(1024+0), SEEK_SET);
+  read(fd, &(super_block.s_inodes_count), sizeof(unsigned int));
+  read(fd, &(super_block.s_blocks_count), sizeof(unsigned int));
+  read(fd, &(super_block.s_r_blocks_count), sizeof(unsigned int));
+  read(fd, &(super_block.s_free_blocks_count), sizeof(unsigned int));
+  read(fd, &(super_block.s_free_inodes_count), sizeof(unsigned int));
+  read(fd, &(super_block.s_first_data_block), sizeof(unsigned int));
+  read(fd, &(super_block.s_log_block_size), sizeof(unsigned int));
+
+  lseek(fd, (1024+32), SEEK_SET);
+  read(fd, &(super_block.s_blocks_per_group), sizeof(unsigned int));
+  read(fd, &(super_block.s_clusters_per_group), sizeof(unsigned int));
+  read(fd, &(super_block.s_inodes_per_group), sizeof(unsigned int));
+
+  lseek(fd, (1024+48), SEEK_SET);
+  read(fd, &(super_block.s_wtime),	sizeof(unsigned int));
+
+  lseek(fd, (1024+64),	SEEK_SET);
+  read(fd, &(super_block.s_lastcheck),	sizeof(unsigned int));
+
+  lseek(fd, (1024+44),SEEK_SET);
+  read(fd, &(super_block.s_mtime),	sizeof(unsigned int));
+
+  lseek(fd, (1024+84),	SEEK_SET);
+  read(fd, &(super_block.s_first_ino), sizeof(unsigned int));
+  read(fd, &(super_block.s_inode_size),	sizeof(unsigned int));
+
+  lseek(fd, (1024+120), SEEK_SET);
+  read(fd, &(super_block.s_volume_name), 16 );
+  super_block.s_log_block_size =  1024 << super_block.s_log_block_size;
+
+}
+
 /*****************************************************
 *
 * Function analyzes EXT2 files
@@ -109,13 +145,14 @@ void printExt2(ext2_super_block info){
 *
 *****************************************************/
 int analyzeEXT2(int fd, int mode){
-  ext2_super_block super_block;
+  
 
   lseek(fd, (off_t) 1024, SEEK_SET);
   read(fd, &super_block, sizeof(ext2_super_block));
 
   if (super_block.s_magic == EXT2_SUPER_MAGIC) {
     if (mode == 0){
+      getExt2Info(fd);
       printExt2(super_block);
     }
     return 1;
@@ -132,7 +169,7 @@ int analyzeEXT2(int fd, int mode){
 *
 *****************************************************/
 
-void findFAT16(int fd, char *filename){
+void findFAT16(int fd, char *filename, int mode){
   
  
   int FirstRootDirSecNum = 0;
@@ -143,17 +180,153 @@ void findFAT16(int fd, char *filename){
   for (int i = 0; i < bpb.BPB_RootEntCnt; i++){
     
     pread(fd, &name, 8, FirstRootDirSecNum);
-    
     if (strcmp(filename,name) == 0){
-      int aux = FirstRootDirSecNum+29;
-      pread(fd, &size, 4, aux);
-      printf(FILE_FOUND, size);
-      found = 1;
+      if (mode == 1){
+        unsigned char delete_file = 0xE5;
+        pwrite(fd, &delete_file , 1, FirstRootDirSecNum);
+      } else {
+        int aux = FirstRootDirSecNum+29;
+        pread(fd, &size, 4, aux);
+        printf(FILE_FOUND, size);
+        found = 1;
+      }
+      
       break;
     }
     FirstRootDirSecNum += 32;
   }
   
+  if(found == 0){
+    printf(FILE_NOT_FOUND);
+  }
+
+ 
+}
+
+
+
+unsigned long searchInodeAddress(int fd, ext2_super_block super_block, int n_inode){
+    unsigned long address;
+    unsigned long n_block = (unsigned long) n_inode / super_block.s_inodes_per_group;
+    n_inode= n_inode - (super_block.s_inodes_per_group * n_block);
+
+    //unsigned long block_size = super_block.s_blocks_per_group * super_block.s_log_block_size;
+    unsigned long block_size = super_block.s_blocks_per_group * 1024;
+    unsigned long group_table_position = 0;
+    unsigned long table_position = 0;
+    unsigned long inode_position = 0;
+    
+    //group_table_position = super_block.s_log_block_size * (super_block.s_first_data_block + 1);
+    group_table_position = 1024 * (super_block.s_first_data_block + 1);
+
+    lseek(fd, group_table_position + 8, SEEK_SET);
+    read(fd, &table_position, 4);
+
+    //inode_position = table_position * super_block.s_log_block_size;
+    
+    inode_position = table_position * 1024;
+    
+    address = (block_size * n_block) + inode_position + (n_inode - 1) * super_block.s_inode_size;
+    return address;
+}
+
+Inode getInode(int fd, unsigned long address){
+    Inode inode;
+    lseek(fd, address, SEEK_SET);
+    read(fd, &inode.i_mode, 2);
+    read(fd, &inode.i_uid, 2);
+    read(fd, &inode.i_size, 4);
+    read(fd, &inode.i_atime, 4);
+    read(fd, &inode.i_ctime, 4);
+    read(fd, &inode.i_mtime, 4);
+    read(fd, &inode.i_dtime, 4);
+    read(fd, &inode.i_gid, 2);
+    read(fd, &inode.i_links_count, 2);
+    read(fd, &inode.i_blocks, 4);
+    read(fd, &inode.i_flags, 4);
+    read(fd, &inode.i_osd1, 4);
+
+    
+    for(int i = 0; i < 15; i++) {
+      inode.i_block[i] = 0;
+      read(fd, &inode.i_block[i], 4);
+    }
+    
+    read(fd, &inode.i_generation, 4);
+    read(fd, &inode.i_file_acl, 4);
+    read(fd, &inode.i_dir_acl, 4);
+    read(fd, &inode.i_faddr, 4);
+    read(fd, &inode.i_osd2, 12);
+
+    return inode;
+}
+
+DirectoryEntry getDE(int fd, unsigned long data_block_pos){
+
+    DirectoryEntry directory;
+
+    lseek(fd, data_block_pos, SEEK_SET);
+    read(fd, &directory.inode, sizeof(uint32_t));
+    read(fd, &directory.rec_len, sizeof(uint16_t));
+    read(fd, &directory.name_len, sizeof(uint8_t));
+    read(fd, &directory.file_type, sizeof(uint8_t));
+    read(fd, &directory.name, directory.name_len);
+    //Reset lseek
+    lseek(fd, data_block_pos, SEEK_SET);
+
+    return directory;
+}
+
+/*****************************************************
+*
+* Function find a file in EXT2
+* Args: fd = file descriptor
+* Return: void
+*
+*****************************************************/
+
+void findEXT2(int fd, char *filename, int mode){
+  
+	int found = 0;
+  unsigned long address = searchInodeAddress(fd, super_block, 1) + 128;
+  
+  unsigned long total_block = 0;
+  unsigned long address_directory = 0;
+  
+
+	Inode inode = getInode(fd, address);
+  Inode aux;
+	DirectoryEntry directory_entry;
+
+	for (int i=0; i<15; i++ ) {
+		if ( inode.i_block[i] == 0 ) {
+      break;
+		}
+		address_directory = inode.i_block[i] * 1024;
+		do {
+			directory_entry = getDE(fd, address_directory);
+
+			if ( directory_entry.inode != 0) {
+          printf("-%s-", directory_entry.name);
+  				if ( strcmp(directory_entry.name, filename) == 0 ) {
+
+            aux = getInode(fd, searchInodeAddress(fd, super_block, directory_entry.inode));
+            printf("\n");
+            printf(FILE_FOUND, aux.i_size);
+            found = 1;
+            break;
+
+  				}
+        
+			}
+
+			address_directory += directory_entry.rec_len;
+			total_block  += directory_entry.rec_len;
+
+		} while (total_block < 1024);
+	}
+
+  printf("%d", mode);
   if(found == 0){
     printf(FILE_NOT_FOUND);
   }

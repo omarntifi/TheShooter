@@ -44,8 +44,21 @@ void find_op(int fd, char *filename){
   type_system = info_op(fd,1);
   
   if (type_system == 1){
-    //TODO: find en FAT16
-    findFAT16(fd, filename);
+    findFAT16(fd, filename, 0);
+   ;
+  } else if(type_system == 2){
+    //TODO: find en ext2
+    findEXT2(fd, filename, 0);
+  }
+  
+}
+
+void delete_op(int fd, char *filename){
+  int type_system = 0;
+  type_system = info_op(fd,1);
+  
+  if (type_system == 1){
+    findFAT16(fd, filename, 1);
    ;
   } else if(type_system == 2){
     //TODO: find en ext2
@@ -57,7 +70,7 @@ int main(int argc, char *argv[])
 {
     
     int fd;
-    int info = -1, find = -1;
+    int info = -1, find = -1, deletef = -1;
     
     if (argc != 4)
     {
@@ -67,8 +80,9 @@ int main(int argc, char *argv[])
     
     info = strcmp(argv[1], "/info");
     find = strcmp(argv[1], "/find");
+    deletef = strcmp(argv[1], "/delete");
     
-    if (info == 0 || find == 0)
+    if (info == 0 || find == 0 || deletef == 0)
     {
         fd = open(argv[2], O_RDONLY);
 
@@ -82,6 +96,8 @@ int main(int argc, char *argv[])
           info_op(fd, 0);
         } else if (find == 0){
           find_op(fd, argv[3]);
+        } else if (deletef == 0){
+          delete_op(fd, argv[3]);
         }
         
         

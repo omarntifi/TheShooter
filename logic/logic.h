@@ -11,6 +11,7 @@
 #define FILE_SYSTEM_INFO "------ Filesystem Information ------\n\n"
 #define EXT2_SUPER_MAGIC 0xEF53
 #define EXT2_LABEL_LEN 16
+#define EXT2_OFFSET 1024
 #define FILE_FOUND "Fitxer trobat. Ocupa %d bytes.\n"
 #define FILE_NOT_FOUND "Error. Fitxer no trobat.\n"
 
@@ -81,6 +82,34 @@ typedef struct
 
 } ext2_super_block;
 
+typedef struct {
+    uint16_t i_mode;
+    uint16_t i_uid;
+    uint32_t i_size;
+    uint32_t i_atime;
+    uint32_t i_ctime;
+    uint32_t i_mtime;
+    uint32_t i_dtime;
+    uint16_t i_gid;
+    uint16_t i_links_count;
+    uint32_t i_blocks;
+    uint32_t i_flags;
+    uint32_t i_osd1;
+    uint32_t i_block[15];
+    uint32_t i_generation;
+    uint32_t i_file_acl;
+    uint32_t i_dir_acl;
+    uint32_t i_faddr;
+    unsigned long i_osd2;
+} Inode;
+
+typedef struct {
+    uint32_t inode;
+    uint16_t rec_len;
+    uint8_t name_len;
+    uint8_t file_type;
+    char name[255];
+} DirectoryEntry;
 
 
 void printFat16(Bpb fat, Bs bs);
@@ -88,5 +117,6 @@ int analyzeFAT16(int fd, int mode);
 char *timestamp_to_date(time_t rawtime);
 void printExt2(ext2_super_block info);
 int analyzeEXT2(int fd, int mode);
-void findFAT16(int fd, char *filename);
+void findFAT16(int fd, char *filename, int mode);
+void findEXT2(int fd, char *filename, int mode);
 #endif
