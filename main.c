@@ -36,6 +36,11 @@ int main(int argc, char *argv[])
         }
 
         is_fat16 = analyzeFAT16(fd);
+        
+        if(is_fat16 != 1){
+          is_ext2 = analyzeEXT2(fd);
+        }
+        
         close(fd);
         
         if (is_fat16 == 0 && is_ext2 == 0) {
