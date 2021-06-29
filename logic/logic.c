@@ -1,5 +1,6 @@
 #include "logic.h"
 
+Bpb bpb;
 
 /*****************************************************
 *
@@ -31,25 +32,25 @@ void printFat16(Bpb fat, Bs bs){
 *
 *****************************************************/
 
-int analyzeFAT16(int fd){
-  unsigned char *fileInfo = malloc(512);
-  read(fd, fileInfo, 512);
-
-  unsigned char *aux = malloc(32);
-  int j = 0;
-  for (int i = 35; i < 61; i++){
-    aux[j] = fileInfo[i];
-    j++;
-  }
-
+int analyzeFAT16(int fd, int mode){
+  
   Bs bs;
-  memcpy(&(bs), aux, sizeof(Bs));
-  Bpb bpb;
-    
+  pread(fd, bs.BS_VolLab, 11, 43);
+  pread(fd, bs.BS_FilSysType, 8, 54);
   //CHECK FAT TYPE IS FAT16
   if (strstr(bs.BS_FilSysType, "FAT16") != NULL ){   
-    memcpy(&(bpb), fileInfo, sizeof(Bpb));  
-    printFat16(bpb, bs);
+    pread(fd, &(bpb.BPB_BytesPerSec), 2, 11);
+    pread(fd, &(bpb.BPB_SecPerClus), 1, 13);
+    pread(fd, &(bpb.BPB_RsvdSecCnt), 2, 14);
+    pread(fd, &(bpb.BPB_NumFATs), 1, 16);
+    pread(fd, &(bpb.BPB_RootEntCnt), 2, 17);
+    pread(fd, &(bpb.BPB_TotSec16), 2, 19);
+    pread(fd, &(bpb.BPB_Media), 1, 21);
+    pread(fd, &(bpb.BPB_FATSz16), 2, 22);
+    pread(fd, &(bpb.BS_OEMName), 6, 3);
+    if (mode == 0){
+      printFat16(bpb, bs);
+    }
     return 1;
   }
   
@@ -107,16 +108,55 @@ void printExt2(ext2_super_block info){
 * Return: 1 if file_type == ext2 else 0
 *
 *****************************************************/
-int analyzeEXT2(int fd){
+int analyzeEXT2(int fd, int mode){
   ext2_super_block super_block;
 
   lseek(fd, (off_t) 1024, SEEK_SET);
   read(fd, &super_block, sizeof(ext2_super_block));
 
   if (super_block.s_magic == EXT2_SUPER_MAGIC) {
-    printExt2(super_block);
+    if (mode == 0){
+      printExt2(super_block);
+    }
     return 1;
   }
     
   return 0;
+}
+
+/*****************************************************
+*
+* Function find a file in FAT16
+* Args: fd = file descriptor
+* Return: void
+*
+*****************************************************/
+
+void findFAT16(int fd, char *filename){
+  
+ 
+  int FirstRootDirSecNum = 0;
+  FirstRootDirSecNum = (bpb.BPB_RsvdSecCnt * bpb.BPB_BytesPerSec) + (bpb.BPB_NumFATs * bpb.BPB_FATSz16 * bpb.BPB_BytesPerSec);
+  char name[8];
+  int size;
+  int found = 0;
+  for (int i = 0; i < bpb.BPB_RootEntCnt; i++){
+    
+    pread(fd, &name, 8, FirstRootDirSecNum);
+    
+    if (strcmp(filename,name) == 0){
+      int aux = FirstRootDirSecNum+29;
+      pread(fd, &size, 4, aux);
+      printf(FILE_FOUND, size);
+      found = 1;
+      break;
+    }
+    FirstRootDirSecNum += 32;
+  }
+  
+  if(found == 0){
+    printf(FILE_NOT_FOUND);
+  }
+
+ 
 }
