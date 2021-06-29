@@ -14,7 +14,7 @@
 #define FILE_NOT_IN_DOMAIN "Sistema d arxius no es ni EXT2 ni FAT16.\n"
 #define VOLUME_NOT_FORMAT "Error. Volum no formatat en FAT16 ni EXT2."
 
-void info_op(int fd, int mode){
+int info_op(int fd, int mode){
   int is_fat16 = 0, is_ext2 = 0;
   
   is_fat16 = analyzeFAT16(fd, mode);
@@ -29,11 +29,28 @@ void info_op(int fd, int mode){
     } else {
       printf(VOLUME_NOT_FORMAT);
     }
+  } else if (is_fat16 == 1){
+    //TYPE FAT16 FIND
+    return 1;
+  } else {
+    //TYPE EXT2 FIND
+    return 2;  
   }
+  return 0;
 }
 
-void find_op(int fd){
-  info_op(fd,1);
+void find_op(int fd, char *filename){
+  int type_system = 0;
+  type_system = info_op(fd,1);
+  
+  if (type_system == 1){
+    //TODO: find en FAT16
+    findFAT16(fd, filename);
+   ;
+  } else if(type_system == 2){
+    //TODO: find en ext2
+  }
+  
 }
 
 int main(int argc, char *argv[])
@@ -64,7 +81,7 @@ int main(int argc, char *argv[])
         if (info == 0){
           info_op(fd, 0);
         } else if (find == 0){
-          find_op(fd);
+          find_op(fd, argv[3]);
         }
         
         

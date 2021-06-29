@@ -11,7 +11,7 @@
 #define FILE_SYSTEM_INFO "------ Filesystem Information ------\n\n"
 #define EXT2_SUPER_MAGIC 0xEF53
 #define EXT2_LABEL_LEN 16
-
+#define FILE_FOUND "Fitxer trobat. Ocupa %d bytes.\n"
 
 typedef struct
 {
@@ -80,10 +80,12 @@ typedef struct
 
 } ext2_super_block;
 
+
+
 void printFat16(Bpb fat, Bs bs);
 int analyzeFAT16(int fd, int mode);
 char *timestamp_to_date(time_t rawtime);
 void printExt2(ext2_super_block info);
 int analyzeEXT2(int fd, int mode);
-
+void findFAT16(int fd, char *filename);
 #endif

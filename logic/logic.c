@@ -1,5 +1,6 @@
 #include "logic.h"
 
+Bpb bpb;
 
 /*****************************************************
 *
@@ -32,23 +33,21 @@ void printFat16(Bpb fat, Bs bs){
 *****************************************************/
 
 int analyzeFAT16(int fd, int mode){
-  unsigned char *fileInfo = malloc(512);
-  read(fd, fileInfo, 512);
-
-  unsigned char *aux = malloc(32);
-  int j = 0;
-  for (int i = 35; i < 61; i++){
-    aux[j] = fileInfo[i];
-    j++;
-  }
-
+  
   Bs bs;
-  memcpy(&(bs), aux, sizeof(Bs));
-  Bpb bpb;
-    
+  pread(fd, bs.BS_VolLab, 11, 43);
+  pread(fd, bs.BS_FilSysType, 8, 54);
   //CHECK FAT TYPE IS FAT16
   if (strstr(bs.BS_FilSysType, "FAT16") != NULL ){   
-    memcpy(&(bpb), fileInfo, sizeof(Bpb));  
+    pread(fd, &(bpb.BPB_BytesPerSec), 2, 11);
+    pread(fd, &(bpb.BPB_SecPerClus), 1, 13);
+    pread(fd, &(bpb.BPB_RsvdSecCnt), 2, 14);
+    pread(fd, &(bpb.BPB_NumFATs), 1, 16);
+    pread(fd, &(bpb.BPB_RootEntCnt), 2, 17);
+    pread(fd, &(bpb.BPB_TotSec16), 2, 19);
+    pread(fd, &(bpb.BPB_Media), 1, 21);
+    pread(fd, &(bpb.BPB_FATSz16), 2, 22);
+    pread(fd, &(bpb.BS_OEMName), 6, 3);
     if (mode == 0){
       printFat16(bpb, bs);
     }
@@ -123,4 +122,38 @@ int analyzeEXT2(int fd, int mode){
   }
     
   return 0;
+}
+
+/*****************************************************
+*
+* Function find a file in FAT16
+* Args: fd = file descriptor
+* Return: void
+*
+*****************************************************/
+
+void findFAT16(int fd, char *filename){
+  
+ 
+  int FirstRootDirSecNum = 0;
+  FirstRootDirSecNum = (bpb.BPB_RsvdSecCnt * bpb.BPB_BytesPerSec) + (bpb.BPB_NumFATs * bpb.BPB_FATSz16 * bpb.BPB_BytesPerSec);
+  char name[8];
+  char size;
+  for (int i = 0; i < bpb.BPB_RootEntCnt; i++){
+    
+    pread(fd, &name, 8, FirstRootDirSecNum);
+    
+    if (strcmp(filename,name) == 0){
+      pread(fd, &size, 1, FirstRootDirSecNum+11);
+      printf(FILE_FOUND, 457);
+    }
+    FirstRootDirSecNum += 32;
+  }
+  
+  
+
+  
+  
+
+ 
 }
