@@ -81,9 +81,9 @@ typedef struct
 } ext2_super_block;
 
 void printFat16(Bpb fat, Bs bs);
-int analyzeFAT16(int fd, int mode);
+int analyzeFAT16(int fd);
 char *timestamp_to_date(time_t rawtime);
 void printExt2(ext2_super_block info);
-int analyzeEXT2(int fd, int mode);
+int analyzeEXT2(int fd);
 
 #endif

@@ -31,7 +31,7 @@ void printFat16(Bpb fat, Bs bs){
 *
 *****************************************************/
 
-int analyzeFAT16(int fd, int mode){
+int analyzeFAT16(int fd){
   unsigned char *fileInfo = malloc(512);
   read(fd, fileInfo, 512);
 
@@ -49,9 +49,7 @@ int analyzeFAT16(int fd, int mode){
   //CHECK FAT TYPE IS FAT16
   if (strstr(bs.BS_FilSysType, "FAT16") != NULL ){   
     memcpy(&(bpb), fileInfo, sizeof(Bpb));  
-    if (mode == 0){
-      printFat16(bpb, bs);
-    }
+    printFat16(bpb, bs);
     return 1;
   }
   
@@ -109,16 +107,14 @@ void printExt2(ext2_super_block info){
 * Return: 1 if file_type == ext2 else 0
 *
 *****************************************************/
-int analyzeEXT2(int fd, int mode){
+int analyzeEXT2(int fd){
   ext2_super_block super_block;
 
   lseek(fd, (off_t) 1024, SEEK_SET);
   read(fd, &super_block, sizeof(ext2_super_block));
 
   if (super_block.s_magic == EXT2_SUPER_MAGIC) {
-    if (mode == 0){
-      printExt2(super_block);
-    }
+    printExt2(super_block);
     return 1;
   }
     
