@@ -138,22 +138,25 @@ void findFAT16(int fd, char *filename){
   int FirstRootDirSecNum = 0;
   FirstRootDirSecNum = (bpb.BPB_RsvdSecCnt * bpb.BPB_BytesPerSec) + (bpb.BPB_NumFATs * bpb.BPB_FATSz16 * bpb.BPB_BytesPerSec);
   char name[8];
-  char size;
+  int size;
+  int found = 0;
   for (int i = 0; i < bpb.BPB_RootEntCnt; i++){
     
     pread(fd, &name, 8, FirstRootDirSecNum);
     
     if (strcmp(filename,name) == 0){
-      pread(fd, &size, 1, FirstRootDirSecNum+11);
-      printf(FILE_FOUND, 457);
+      int aux = FirstRootDirSecNum+29;
+      pread(fd, &size, 4, aux);
+      printf(FILE_FOUND, size);
+      found = 1;
+      break;
     }
     FirstRootDirSecNum += 32;
   }
   
-  
-
-  
-  
+  if(found == 0){
+    printf(FILE_NOT_FOUND);
+  }
 
  
 }

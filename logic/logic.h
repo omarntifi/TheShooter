@@ -12,6 +12,7 @@
 #define EXT2_SUPER_MAGIC 0xEF53
 #define EXT2_LABEL_LEN 16
 #define FILE_FOUND "Fitxer trobat. Ocupa %d bytes.\n"
+#define FILE_NOT_FOUND "Error. Fitxer no trobat.\n"
 
 typedef struct
 {

@@ -12,7 +12,7 @@
 #define ERROR_FILE_FIND "Error. Volum no trobat.\n"
 #define ERROR_OPERATION "El programa no soporta aquesta operacio.\nOperacions disponibles:\n1./info\n2./find\n"
 #define FILE_NOT_IN_DOMAIN "Sistema d arxius no es ni EXT2 ni FAT16.\n"
-#define VOLUME_NOT_FORMAT "Error. Volum no formatat en FAT16 ni EXT2."
+#define VOLUME_NOT_FORMAT "Error. Volum no formatat en FAT16 ni EXT2.\n"
 
 int info_op(int fd, int mode){
   int is_fat16 = 0, is_ext2 = 0;
