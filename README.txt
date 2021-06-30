@@ -4,6 +4,9 @@ Realitzat per: Omar Ntifi Matarín - omar.ntifi@students.salle.url.edu
 1.Compilació del projecte:
 -Entorn de Montserrat de la univeristat
 -Compilar amb eina make
+-Instruccions:
+  -La comanda /find amb sistemes FAT16 busca arxius sense la extensió al nom. A més, és necessari posar els espais al nom per completar 8 caràcters.
+  És a dir, si volem buscar el fitxer "HOLA" haurem introduir per comanda el nom "HOLA    " amb 4 espais per aconseguir els 8 caràcters
 
 2.Explicació sistemes fitxers
 -FAT16: FAT16 és una versió de 16 bits del sistema de fitxers FAT. Aquests tenen tots en comú que la seva estructura està distribuida en quatre parts:
