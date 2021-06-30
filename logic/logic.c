@@ -278,11 +278,29 @@ Inode getInode(int fd, unsigned long address){
     return inode;
 }
 
-void deleteEntry(int fd, unsigned long address_entry){
+void deleteEntry(int fd, unsigned long address_entry, unsigned long address_inode){
+    //Delete entry
+    //Flag delete nombre
     unsigned char delete_flag = (unsigned char) 0xE5;
     lseek(fd, address_entry+8, SEEK_SET);
     write(fd, &delete_flag, 1);
     
+    //Delete inode
+    //EXT2_SECRM_FL = 0x00000001 -> secure deletion flag
+    uint32_t new_flag = 0x00000001;
+    lseek(fd, address_inode+32, SEEK_SET);
+    write(fd, &new_flag, 4);
+    
+    //contador de ficheros linkados a 0
+    uint16_t link_count = 0;
+    lseek(fd, address_inode+26, SEEK_SET);
+    write(fd, &link_count, 2);
+    
+    //fecha de borrado
+    time_t rawtime;
+    rawtime = time (NULL);
+    lseek(fd, address_inode+20, SEEK_SET);
+    write(fd, &rawtime, 4);
 }
 
 DirectoryEntry getDE(int fd, unsigned long data_block_pos){
@@ -339,14 +357,13 @@ int findEXT2(int fd, char *filename, int mode, int n_inode){
 			if ( directory_entry.inode != 0 && strcmp(directory_entry.name, ".") != 0 && strcmp(directory_entry.name, "..") != 0) {
           //printf("\n-%s-\n", directory_entry.name);
   				if ( strcmp(directory_entry.name, filename) == 0 ) {
-            
+            unsigned long address_inode = searchInodeAddress(fd, super_block, directory_entry.inode);
             //DELETE MODE
-            if (mode == 1){
-              printf("delete"); 
-              deleteEntry(fd, address_directory);
+            if (mode == 1){ 
+              deleteEntry(fd, address_directory, address_inode);
               printf(FILE_DELETED, filename);
             } else {
-              aux = getInode(fd, searchInodeAddress(fd, super_block, directory_entry.inode));
+              aux = getInode(fd, address_inode);
               printf("\n");
               printf(FILE_FOUND, aux.i_size);
             }
