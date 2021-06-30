@@ -12,9 +12,9 @@
 #define EXT2_SUPER_MAGIC 0xEF53
 #define EXT2_LABEL_LEN 16
 #define EXT2_OFFSET 1024
-#define FILE_FOUND "Fitxer trobat. Ocupa %d bytes.\n"
-#define FILE_NOT_FOUND "Error. Fitxer no trobat.\n"
-#define FILE_DELETED "El fitxer %s ha estat eliminat.\n"
+#define FILE_FOUND "\nFitxer trobat. Ocupa %d bytes.\n"
+#define FILE_NOT_FOUND "\nError. Fitxer no trobat.\n"
+#define FILE_DELETED "\nEl fitxer %s ha estat eliminat.\n"
 
 typedef struct
 {
@@ -119,5 +119,5 @@ char *timestamp_to_date(time_t rawtime);
 void printExt2(ext2_super_block info);
 int analyzeEXT2(int fd, int mode);
 int findFAT16(int fd, char *filename, int mode, int offset_directory);
-void findEXT2(int fd, char *filename, int mode);
+int findEXT2(int fd, char *filename, int mode, int n_inode);
 #endif
