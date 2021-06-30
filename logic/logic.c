@@ -28,7 +28,7 @@ void printFat16(Bpb fat, Bs bs){
 /*****************************************************
 *
 * Function analyzes FAT16 files
-* Args: fd = file descriptor
+* Args: fd = file descriptor, mode = indica si se printa informacion o no 
 * Return: 1 if file_type == fat16 else 0
 *
 *****************************************************/
@@ -100,7 +100,13 @@ void printExt2(ext2_super_block info){
     printf("Ultima escriptura: %s", timestamp_to_date(info.s_wtime));
 }
 
-
+/*****************************************************
+*
+* Function gets Ext2 info
+* Args: fd = file descriptor
+* Return: void
+*
+*****************************************************/
 
 void getExt2Info(int fd){
 
@@ -140,7 +146,7 @@ void getExt2Info(int fd){
 /*****************************************************
 *
 * Function analyzes EXT2 files
-* Args: fd = file descriptor
+* Args: fd = file descriptor, mode = if 1 not print info
 * Return: 1 if file_type == ext2 else 0
 *
 *****************************************************/
@@ -164,8 +170,8 @@ int analyzeEXT2(int fd, int mode){
 /*****************************************************
 *
 * Function find a file in FAT16
-* Args: fd = file descriptor
-* Return: void
+* Args: fd = file descriptor, filename = file to search, mode = delete file, offset_directory = address directory
+* Return: int = founded
 *
 *****************************************************/
 
@@ -223,6 +229,13 @@ int findFAT16(int fd, char *filename, int mode, int offset_directory){
 }
 
 
+/*****************************************************
+*
+* Function get addres from inode
+* Args: fd = file descriptor, super_block = info ext2, n_inode = numero de inode
+* Return: unsigned long = address from inode
+*
+*****************************************************/
 
 unsigned long searchInodeAddress(int fd, ext2_super_block super_block, int n_inode){
     unsigned long address;
@@ -248,6 +261,14 @@ unsigned long searchInodeAddress(int fd, ext2_super_block super_block, int n_ino
     address = (block_size * n_block) + inode_position + (n_inode - 1) * super_block.s_inode_size;
     return address;
 }
+
+/*****************************************************
+*
+* Function getInode from file in EXT2
+* Args: fd = file descriptor, address
+* Return: Inode = inode trobat
+*
+*****************************************************/
 
 Inode getInode(int fd, unsigned long address){
     Inode inode;
@@ -280,6 +301,13 @@ Inode getInode(int fd, unsigned long address){
     return inode;
 }
 
+/*****************************************************
+*
+* Function delete entry and inode from file in EXT2
+* Args: fd = file descriptor, address_entry, address_inode
+* Return: void
+*
+*****************************************************/
 void deleteEntry(int fd, unsigned long address_entry, unsigned long address_inode){
     //Delete entry
     //Flag delete nombre
@@ -305,6 +333,14 @@ void deleteEntry(int fd, unsigned long address_entry, unsigned long address_inod
     write(fd, &rawtime, 4);
 }
 
+/*****************************************************
+*
+* Function get Directory Entry from file in EXT2
+* Args: fd = file descriptor, filename = file to search, data_block_pos = posicio del directori
+* Return: DirectoryEntry = directori trobat
+*
+*****************************************************/
+
 DirectoryEntry getDE(int fd, unsigned long data_block_pos){
 
     DirectoryEntry directory;
@@ -324,8 +360,8 @@ DirectoryEntry getDE(int fd, unsigned long data_block_pos){
 /*****************************************************
 *
 * Function find a file in EXT2
-* Args: fd = file descriptor
-* Return: void
+* Args: fd = file descriptor, filename = file to search, mode = delete file, offset_directory = address directory
+* Return: int = founded
 *
 *****************************************************/
 
