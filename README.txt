@@ -33,7 +33,8 @@ dades obtingudes tenien sentit. Com tractam fitxers i llegim bytes és fàcil sabe
 
   e-Problemes observats: El major problema que ha sorgit en aquesta pràctica ha sigut saber escollir el tipus de dades que es fa servir per llegir una variable. És a dir,
 si llegies més bytes que el tipus permitia el programa feia core dumped, i si tenies espai pero no llegies la informació que tocaba tenies dades incorrectes. Això s'ha anat
-solucionant cercant informació dels tipus de dades a internet, fent us de les guies del estudy i sobretot fent prova i error al programa.
+solucionant cercant informació dels tipus de dades a internet, fent us de les guies del estudy i sobretot fent prova i error al programa. Un altre problema que s'ha trobat ha sigut
+que quan es llegia un nombre d'un fitxer o directori al sistema EXT2 no es mostrava correctament. Això ho causaven els directoris ".", ".." i s'ha solucionat no analitzant aquests.
 
   f-Estimació temporal: FASE1 (9h) + FASE2 (12h) + FASE3 (5h) + FASE4 (6h) = 32h
 
