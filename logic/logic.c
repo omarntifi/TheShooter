@@ -169,17 +169,21 @@ int analyzeEXT2(int fd, int mode){
 *
 *****************************************************/
 
-void findFAT16(int fd, char *filename, int mode){
+int findFAT16(int fd, char *filename, int mode, int offset_directory){
   
  
   int FirstRootDirSecNum = 0;
-  FirstRootDirSecNum = (bpb.BPB_RsvdSecCnt * bpb.BPB_BytesPerSec) + (bpb.BPB_NumFATs * bpb.BPB_FATSz16 * bpb.BPB_BytesPerSec);
+  FirstRootDirSecNum = (bpb.BPB_RsvdSecCnt * bpb.BPB_BytesPerSec) + (bpb.BPB_NumFATs * bpb.BPB_FATSz16 * bpb.BPB_BytesPerSec) + offset_directory;
   char name[8];
   int size;
   int found = 0;
+  unsigned char atribute = 0;
   for (int i = 0; i < bpb.BPB_RootEntCnt; i++){
     
     pread(fd, &name, 8, FirstRootDirSecNum);
+    /*if (strcmp(name,"") != 0){
+      printf("Names:-%s-%s-\n", name, filename);
+    }*/
     if (strcmp(filename,name) == 0){
       if (mode == 1){
         unsigned char delete_flag = (unsigned char) 0xE5;
@@ -195,9 +199,23 @@ void findFAT16(int fd, char *filename, int mode){
       found = 1;
       break;
     }
+    
+    pread(fd, &atribute, 1, FirstRootDirSecNum+11);
+    
+    //Si es directorio buscamos dentro
+    if((atribute & 0x10) == 0x10 && found == 0 && strcmp(name,"") != 0){
+      int offset;
+      pread(fd, &offset, 2, FirstRootDirSecNum+26);
+      //printf("Directori: %s\n", name);
+      //printf("Offset: %d\n", offset);
+      found = findFAT16(fd, filename, mode, offset+1); 
+      //printf("\nAcaba directorio\n");           
+    }
+    
     FirstRootDirSecNum += 32;
   }
   
+  return found;
   if(found == 0){
     printf(FILE_NOT_FOUND);
   }
