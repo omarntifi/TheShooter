@@ -118,6 +118,6 @@ int analyzeFAT16(int fd, int mode);
 char *timestamp_to_date(time_t rawtime);
 void printExt2(ext2_super_block info);
 int analyzeEXT2(int fd, int mode);
-void findFAT16(int fd, char *filename, int mode, int offset_directory);
+int findFAT16(int fd, char *filename, int mode, int offset_directory);
 void findEXT2(int fd, char *filename, int mode);
 #endif
