@@ -216,9 +216,6 @@ int findFAT16(int fd, char *filename, int mode, int offset_directory){
   }
   
   return found;
-  if(found == 0){
-    printf(FILE_NOT_FOUND);
-  }
 
  
 }
@@ -281,6 +278,13 @@ Inode getInode(int fd, unsigned long address){
     return inode;
 }
 
+void deleteEntry(int fd, unsigned long address_entry){
+    unsigned char delete_flag = (unsigned char) 0xE5;
+    lseek(fd, address_entry+8, SEEK_SET);
+    write(fd, &delete_flag, 1);
+    
+}
+
 DirectoryEntry getDE(int fd, unsigned long data_block_pos){
 
     DirectoryEntry directory;
@@ -305,11 +309,15 @@ DirectoryEntry getDE(int fd, unsigned long data_block_pos){
 *
 *****************************************************/
 
-void findEXT2(int fd, char *filename, int mode){
+int findEXT2(int fd, char *filename, int mode, int n_inode){
   
 	int found = 0;
-  unsigned long address = searchInodeAddress(fd, super_block, 1) + 128;
-  
+ 
+  unsigned long address = searchInodeAddress(fd, super_block, n_inode);
+  //Primer inode
+  if (n_inode==1){
+    address += 128;
+  } 
   unsigned long total_block = 0;
   unsigned long address_directory = 0;
   
@@ -324,32 +332,40 @@ void findEXT2(int fd, char *filename, int mode){
 		}
 		address_directory = inode.i_block[i] * 1024;
 		do {
+   
 			directory_entry = getDE(fd, address_directory);
-
-			if ( directory_entry.inode != 0) {
-          printf("-%s-", directory_entry.name);
+      
+      //N_inode diferent de 0 i no mirar directoris ".", ".."
+			if ( directory_entry.inode != 0 && strcmp(directory_entry.name, ".") != 0 && strcmp(directory_entry.name, "..") != 0) {
+          //printf("\n-%s-\n", directory_entry.name);
   				if ( strcmp(directory_entry.name, filename) == 0 ) {
-
-            aux = getInode(fd, searchInodeAddress(fd, super_block, directory_entry.inode));
-            printf("\n");
-            printf(FILE_FOUND, aux.i_size);
+            
+            //DELETE MODE
+            if (mode == 1){
+              printf("delete"); 
+              deleteEntry(fd, address_directory);
+              printf(FILE_DELETED, filename);
+            } else {
+              aux = getInode(fd, searchInodeAddress(fd, super_block, directory_entry.inode));
+              printf("\n");
+              printf(FILE_FOUND, aux.i_size);
+            }
             found = 1;
             break;
 
-  				}
+  				} else if (directory_entry.file_type == 2 && found == 0) {   //No trobat, miram si subdirectoris
+              //printf("subdirectori : %s-%d\n", directory_entry.name, directory_entry.inode);
+              found = findEXT2(fd, filename, mode, directory_entry.inode);
+          }
         
 			}
 
 			address_directory += directory_entry.rec_len;
 			total_block  += directory_entry.rec_len;
-
 		} while (total_block < 1024);
 	}
-
-  printf("%d", mode);
-  if(found == 0){
-    printf(FILE_NOT_FOUND);
-  }
+  
+  return found;
 
  
 }
