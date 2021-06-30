@@ -23,12 +23,8 @@ int info_op(int fd, int mode){
     is_ext2 = analyzeEXT2(fd, mode);
   }
   
-  if (is_fat16 == 0 && is_ext2 == 0) {
-    if (mode == 0){
-      printf(FILE_NOT_IN_DOMAIN);
-    } else {
+  if (is_fat16 == 0 && is_ext2 == 0) {   
       printf(VOLUME_NOT_FORMAT);
-    }
   } else if (is_fat16 == 1){
     //TYPE FAT16 FIND
     return 1;
@@ -51,7 +47,7 @@ void find_op(int fd, char *filename){
     found = findEXT2(fd, filename, 0, 1);
   }
   
-  if(found == 0){
+  if(found == 0 && type_system != 0){
     printf(FILE_NOT_FOUND);
   }
 }
@@ -67,7 +63,7 @@ void delete_op(int fd, char *filename){
     found = findEXT2(fd, filename, 1, 1);  
   }
 
-  if(found == 0){
+  if(found == 0 && type_system != 0){
       printf(FILE_NOT_FOUND);
   }
   
