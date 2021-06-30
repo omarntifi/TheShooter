@@ -44,8 +44,10 @@ void find_op(int fd, char *filename){
   type_system = info_op(fd,1);
   
   if (type_system == 1){
-    findFAT16(fd, filename, 0);
-   ;
+    int found = findFAT16(fd, filename, 0, 0);
+    if(found == 0){
+      printf(FILE_NOT_FOUND);
+    }
   } else if(type_system == 2){
     //TODO: find en ext2
     findEXT2(fd, filename, 0);
@@ -58,8 +60,10 @@ void delete_op(int fd, char *filename){
   type_system = info_op(fd,1);
   
   if (type_system == 1){
-    findFAT16(fd, filename, 1);
-   ;
+    int found = findFAT16(fd, filename, 1, 0);
+    if(found == 0){
+      printf(FILE_NOT_FOUND);
+    }
   } else if(type_system == 2){
     //TODO: find en ext2
   }
