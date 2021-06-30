@@ -14,6 +14,7 @@
 #define EXT2_OFFSET 1024
 #define FILE_FOUND "Fitxer trobat. Ocupa %d bytes.\n"
 #define FILE_NOT_FOUND "Error. Fitxer no trobat.\n"
+#define FILE_DELETED "El fitxer %s ha estat eliminat.\n"
 
 typedef struct
 {
