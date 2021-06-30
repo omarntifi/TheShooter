@@ -84,7 +84,7 @@ int main(int argc, char *argv[])
     
     if (info == 0 || find == 0 || deletef == 0)
     {
-        fd = open(argv[2], O_RDONLY);
+        fd = open(argv[2], O_RDWR);
 
         if (fd < 0)
         {  

@@ -182,15 +182,17 @@ void findFAT16(int fd, char *filename, int mode){
     pread(fd, &name, 8, FirstRootDirSecNum);
     if (strcmp(filename,name) == 0){
       if (mode == 1){
-        unsigned char delete_file = 0xE5;
-        pwrite(fd, &delete_file , 1, FirstRootDirSecNum);
+        unsigned char delete_flag = (unsigned char) 0xE5;
+        lseek(fd, FirstRootDirSecNum, SEEK_SET);
+        write(fd,&delete_flag,1);
+        printf(FILE_DELETED, filename);
       } else {
         int aux = FirstRootDirSecNum+29;
         pread(fd, &size, 4, aux);
         printf(FILE_FOUND, size);
-        found = 1;
+        
       }
-      
+      found = 1;
       break;
     }
     FirstRootDirSecNum += 32;
