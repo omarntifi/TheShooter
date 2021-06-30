@@ -10,7 +10,7 @@
 
 #define ERROR_ARGS "Error. Nombre de parametres incorrecte.\n"
 #define ERROR_FILE_FIND "Error. Volum no trobat.\n"
-#define ERROR_OPERATION "El programa no soporta aquesta operacio.\nOperacions disponibles:\n1./info\n2./find\n"
+#define ERROR_OPERATION "El programa no soporta aquesta operacio.\nOperacions disponibles:\n1./info\n2./find\n2./delete\n"
 #define FILE_NOT_IN_DOMAIN "Sistema d arxius no es ni EXT2 ni FAT16.\n"
 #define VOLUME_NOT_FORMAT "Error. Volum no formatat en FAT16 ni EXT2.\n"
 
@@ -74,8 +74,9 @@ int main(int argc, char *argv[])
     
     int fd;
     int info = -1, find = -1, deletef = -1;
-    
-    if (argc != 4)
+    int n_args = 4;
+    //Precheck operation
+    if (argc < 2)
     {
         printf(ERROR_ARGS);
         return -1;
@@ -84,6 +85,18 @@ int main(int argc, char *argv[])
     info = strcmp(argv[1], "/info");
     find = strcmp(argv[1], "/find");
     deletef = strcmp(argv[1], "/delete");
+    
+    if (info == 0){
+      n_args = 3;
+    }
+    
+    if (argc != n_args)
+    {
+        printf(ERROR_ARGS);
+        return -1;
+    }
+    
+    
     
     if (info == 0 || find == 0 || deletef == 0)
     {
